@@ -1,0 +1,8 @@
+{
+  "app": "example-app",
+  "env": "production",
+  "path": "workloads/example-app/overlays/production",
+  "namespace": "example-app-prod",
+  "server": "https://kubernetes.default.svc",
+  "project": "production"
+}

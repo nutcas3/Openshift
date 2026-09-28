@@ -1,0 +1,8 @@
+{
+  "app": "example-app",
+  "env": "staging",
+  "path": "workloads/example-app/overlays/staging",
+  "namespace": "example-app-staging",
+  "server": "https://kubernetes.default.svc",
+  "project": "staging"
+}

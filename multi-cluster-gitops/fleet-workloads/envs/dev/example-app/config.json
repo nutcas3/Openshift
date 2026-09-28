@@ -1,0 +1,8 @@
+{
+  "app": "example-app",
+  "env": "dev",
+  "path": "workloads/example-app/overlays/dev",
+  "namespace": "example-app-dev",
+  "server": "https://kubernetes.default.svc",
+  "project": "dev"
+}
