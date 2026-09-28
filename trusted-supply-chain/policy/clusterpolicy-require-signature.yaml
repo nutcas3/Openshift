@@ -1,0 +1,44 @@
+# Validating admission: only cosign-signed images from the CI registry
+# namespace may run. Pods referencing any other image under ci-pipelines/*
+# — or an unsigned/untamperable one — are rejected.
+#
+# Paste the contents of cosign.pub (from the signing-secrets secret /
+# `cosign generate-key-pair`) into publicKeys before applying.
+# Requires Kyverno (operators/kyverno-operator.yaml). Alternative: enforce
+# signatures via ACS admission control + signature integration instead.
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: require-signed-images
+spec:
+  validationFailureAction: Enforce
+  background: false
+  webhookTimeoutSeconds: 15
+  rules:
+    - name: verify-ci-pipeline-signature
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      exclude:
+        any:
+          - resources:
+              namespaces:
+                - kube-*
+                - openshift-*
+      verifyImages:
+        - type: Cosign
+          imageReferences:
+            - "image-registry.openshift-image-registry.svc:5000/ci-pipelines/*"
+          mutateDigest: true
+          verifyDigest: true
+          required: true
+          attestors:
+            - count: 1
+              entries:
+                - keys:
+                    publicKeys: |-
+                      -----BEGIN PUBLIC KEY-----
+                      REPLACE_WITH_COSIGN_PUBLIC_KEY
+                      -----END PUBLIC KEY-----
