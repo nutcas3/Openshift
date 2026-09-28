@@ -1,0 +1,23 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: rhdh
+  labels:
+    openshift.io/cluster-monitoring: "true"
+---
+apiVersion: rhdh.redhat.com/v1alpha3
+kind: Backstage
+metadata:
+  name: rhdh
+  namespace: rhdh
+spec:
+  application:
+    appConfig:
+      configMaps:
+        - name: rhdh-app-config
+    extraEnvs:
+      secrets:
+        - name: rhdh-secrets
+    route:
+      enabled: true
