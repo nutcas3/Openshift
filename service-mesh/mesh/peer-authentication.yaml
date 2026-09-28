@@ -1,0 +1,10 @@
+# STRICT mTLS inside an ambient-enrolled namespace — enforced by the node
+# ztunnel (no sidecar needed). Plaintext traffic is refused.
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: default
+  namespace: tenant-team-a
+spec:
+  mtls:
+    mode: STRICT

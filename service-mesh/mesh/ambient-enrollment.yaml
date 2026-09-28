@@ -1,0 +1,11 @@
+# Enroll a namespace in ambient mesh: one label, no pod restarts, no
+# injected containers. `oc apply` merges labels onto the existing ns.
+# Pods get L4 mTLS automatically via the node ztunnel; add
+# istio.io/use-waypoint when L7 policy/routing is needed (see waypoint.yaml).
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: tenant-team-a
+  labels:
+    istio.io/dataplane-mode: ambient
+    istio.io/use-waypoint: waypoint

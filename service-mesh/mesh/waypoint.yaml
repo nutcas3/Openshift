@@ -1,0 +1,14 @@
+# Waypoint proxy — the L7 layer in ambient mode. One shared proxy per
+# namespace (or per service account) handles routing/authz for all pods
+# in it — contrast with OSSM2's per-pod sidecars.
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: waypoint
+  namespace: tenant-team-a
+spec:
+  gatewayClassName: istio-waypoint
+  listeners:
+    - name: mesh
+      port: 15008
+      protocol: HBONE

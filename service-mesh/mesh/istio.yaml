@@ -1,0 +1,46 @@
+# OSSM 3.x ambient control plane. Three CRs: Istio (control plane,
+# ambient profile), IstioCNI (required on OpenShift — sets up node-level
+# redirection instead of iptables init containers), ZTunnel (per-node L4
+# mTLS daemon — replaces per-pod Envoy sidecars).
+# Field names follow sailoperator.io/v1alpha1 — confirm against your
+# operator version with `oc explain istio.spec` / `oc get crd ztunnels`.
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: istio-system
+---
+apiVersion: sailoperator.io/v1alpha1
+kind: Istio
+metadata:
+  name: default
+spec:
+  namespace: istio-system
+  updateStrategy:
+    type: InPlace
+  values:
+    profile: ambient
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: istio-cni
+---
+apiVersion: sailoperator.io/v1alpha1
+kind: IstioCNI
+metadata:
+  name: default
+spec:
+  namespace: istio-cni
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ztunnel
+---
+apiVersion: sailoperator.io/v1alpha1
+kind: ZTunnel
+metadata:
+  name: default
+spec:
+  namespace: ztunnel

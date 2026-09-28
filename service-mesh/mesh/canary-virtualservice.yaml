@@ -1,0 +1,37 @@
+# Canary release example — 90/10 split between stable and canary pods
+# (labels version: v1 / v2 on the Deployments).
+# Requires the namespace waypoint (istio.io/use-waypoint label +
+# waypoint.yaml Gateway): L7 routing is handled there, not in sidecars.
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: backend-service
+  namespace: tenant-team-a
+spec:
+  hosts:
+    - backend-service.tenant-team-a.svc.cluster.local
+  http:
+    - route:
+        - destination:
+            host: backend-service
+            subset: v1
+          weight: 90
+        - destination:
+            host: backend-service
+            subset: v2
+          weight: 10
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: backend-service
+  namespace: tenant-team-a
+spec:
+  host: backend-service
+  subsets:
+    - name: v1
+      labels:
+        version: v1
+    - name: v2
+      labels:
+        version: v2
