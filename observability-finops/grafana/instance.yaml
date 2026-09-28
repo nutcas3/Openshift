@@ -1,0 +1,41 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: grafana
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: Grafana
+metadata:
+  name: platform-grafana
+  namespace: grafana
+spec:
+  config:
+    auth:
+      disable_login_form: "true"
+    auth.proxy:
+      enabled: "true"
+      header_name: X-Forwarded-User
+      header_property: username
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDatasource
+metadata:
+  name: prometheus-user-workloads
+  namespace: grafana
+spec:
+  instanceSelector:
+    matchLabels:
+      dashboards: grafana
+  datasource:
+    name: prometheus-user-workloads
+    type: prometheus
+    access: proxy
+    url: https://thanos-querier.openshift-monitoring.svc:9091
+    isDefault: true
+    jsonData:
+      httpHeaderName1: Authorization
+      tlsSkipVerify: true
+      timeInterval: 15s
+    secureJsonData:
+      httpHeaderValue1: Bearer ${SERVICE_ACCOUNT_TOKEN}
