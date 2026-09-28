@@ -1,0 +1,30 @@
+apiVersion: kubeflow.org/v1
+kind: Notebook
+metadata:
+  name: data-science-playground
+  namespace: ai-workloads
+  annotations:
+    notebooks.opendatahub.io/oauth-logout-url: https://rhods-dashboard-redhat-ods-applications.apps.example.com
+spec:
+  template:
+    spec:
+      serviceAccountName: notebook
+      containers:
+        - name: data-science-playground
+          image: image-registry.openshift-image-registry.svc:5000/redhat-ods-applications/s2i-minimal-notebook:2024.2
+          workingDir: /opt/app-root/src
+          resources:
+            requests:
+              cpu: "2"
+              memory: 8Gi
+            limits:
+              cpu: "4"
+              memory: 16Gi
+              nvidia.com/gpu: "1"
+          env:
+            - name: NOTEBOOK_ARGS
+              value: |-
+                --ServerApp.port=8888
+                --ServerApp.token=''
+                --ServerApp.password=''
+                --ServerApp.base_url=/notebook/ai-workloads/data-science-playground

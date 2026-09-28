@@ -1,5 +1,3 @@
-# DataScienceCluster — activates the OpenShift AI components.
-# Apply after rhods-operator is installed.
 apiVersion: datasciencecluster.opendatahub.io/v1
 kind: DataScienceCluster
 metadata:
