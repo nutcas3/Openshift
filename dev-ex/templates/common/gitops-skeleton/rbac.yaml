@@ -1,0 +1,16 @@
+# Grants the owning team admin over their tenant namespace.
+# The subject name must match a group synced to the cluster's identity
+# provider (e.g. via GroupSync / RHSSO). Derived from the OwnerPicker entity.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: ${{ values.rbac_group }}-admin
+  namespace: ${{ values.namespace }}
+subjects:
+  - kind: Group
+    apiGroup: rbac.authorization.k8s.io
+    name: ${{ values.rbac_group }}
+roleRef:
+  kind: ClusterRole
+  apiGroup: rbac.authorization.k8s.io
+  name: admin

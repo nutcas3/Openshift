@@ -1,0 +1,27 @@
+# ArgoCD Application syncing the app repo's manifests/ directory into
+# the tenant namespace created alongside it in this PR.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ${{ values.name }}
+  namespace: openshift-gitops
+  labels:
+    dev-ex.io/component: ${{ values.name }}
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/${{ values.destination.owner }}/${{ values.destination.repo }}.git
+    targetRevision: main
+    path: manifests
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: ${{ values.namespace }}
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      # The namespace is created by namespace.yaml in this same PR —
+      # the Application must not create or own it.
+      - CreateNamespace=false
+      - ApplyOutOfSyncOnly=true
