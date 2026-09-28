@@ -1,0 +1,44 @@
+# Pull-request previews: any fleet-workloads PR labeled `preview` gets a
+# throwaway namespace preview-pr-<n> on the dev cluster, synced to the dev
+# overlay at the PR's head commit. Deleting/merging the PR removes the app.
+#
+# For rate limits, create a `github-creds` secret (key: token) and add to
+# the github generator:  tokenRef: {secretName: github-creds, key: token}
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: pr-preview
+  namespace: openshift-gitops
+spec:
+  goTemplate: true
+  generators:
+    - pullRequest:
+        github:
+          owner: YOUR_GITHUB_ORG
+          repo: fleet-workloads
+          labels:
+            - preview
+        requeueAfterSeconds: 300
+  template:
+    metadata:
+      name: 'pr-{{ .number }}'
+      labels:
+        env: preview
+    spec:
+      project: dev
+      source:
+        repoURL: https://github.com/YOUR_GITHUB_ORG/fleet-workloads.git
+        targetRevision: '{{ .head_sha }}'
+        # Previews render the dev overlay of the workload under review.
+        # For multi-app repos, parameterize with a preview/ dir per app.
+        path: workloads/example-app/overlays/dev
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: 'preview-pr-{{ .number }}'
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+          - ApplyOutOfSyncOnly=true

@@ -1,0 +1,43 @@
+# Platform components per environment, from a static list. Currently:
+# Bitnami Sealed Secrets controller (one instance per env cluster — each
+# cluster has its own sealing key, so secrets are sealed per env).
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: platform
+  namespace: openshift-gitops
+spec:
+  goTemplate: true
+  generators:
+    - list:
+        elements:
+          - env: dev
+            server: https://kubernetes.default.svc
+          - env: staging
+            server: https://kubernetes.default.svc
+          - env: production
+            server: https://kubernetes.default.svc
+  template:
+    metadata:
+      name: 'sealed-secrets-{{ .env }}'
+      labels:
+        env: '{{ .env }}'
+        component: sealed-secrets
+    spec:
+      project: platform
+      source:
+        repoURL: https://bitnami-labs.github.io/sealed-secrets
+        chart: sealed-secrets
+        targetRevision: 2.17.2   # pin; bump deliberately
+        helm:
+          releaseName: sealed-secrets
+      destination:
+        server: '{{ .server }}'
+        namespace: sealed-secrets
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+          - ApplyOutOfSyncOnly=true

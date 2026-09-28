@@ -1,0 +1,19 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: platform
+  namespace: openshift-gitops
+spec:
+  description: Platform-managed components (sealed-secrets, tenant namespaces)
+  sourceRepos:
+    - https://github.com/YOUR_GITHUB_ORG/multi-cluster-gitops.git
+    - https://github.com/YOUR_GITHUB_ORG/fleet-workloads.git
+    - https://bitnami-labs.github.io/sealed-secrets
+  destinations:
+    - server: https://kubernetes.default.svc
+      namespace: '*'
+  # Tenant dirs create Namespaces/RoleBindings; the helm chart creates
+  # CRDs and ClusterRoles — platform project may manage cluster resources.
+  clusterResourceWhitelist:
+    - group: '*'
+      kind: '*'

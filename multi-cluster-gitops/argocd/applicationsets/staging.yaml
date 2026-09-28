@@ -1,0 +1,34 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: workloads-staging
+  namespace: openshift-gitops
+spec:
+  goTemplate: true
+  generators:
+    - git:
+        repoURL: https://github.com/YOUR_GITHUB_ORG/fleet-workloads.git
+        revision: main
+        files:
+          - path: envs/staging/*/config.json
+  template:
+    metadata:
+      name: '{{ .app }}-staging'
+      labels:
+        env: staging
+    spec:
+      project: staging
+      source:
+        repoURL: https://github.com/YOUR_GITHUB_ORG/fleet-workloads.git
+        targetRevision: main
+        path: '{{ .path }}'
+      destination:
+        server: '{{ .server }}'
+        namespace: '{{ .namespace }}'
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+          - ApplyOutOfSyncOnly=true

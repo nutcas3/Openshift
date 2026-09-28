@@ -1,0 +1,15 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: staging
+  namespace: openshift-gitops
+spec:
+  description: Staging environment workloads
+  sourceRepos:
+    - https://github.com/YOUR_GITHUB_ORG/fleet-workloads.git
+  destinations:
+    - server: https://kubernetes.default.svc
+      namespace: '*-staging'
+  clusterResourceWhitelist:
+    - group: '*'
+      kind: Namespace

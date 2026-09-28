@@ -1,0 +1,36 @@
+# Generates one child Application per envs/dev/*/config.json in the
+# fleet-workloads repo. Promoting an app to dev = PR adding config.json.
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: workloads-dev
+  namespace: openshift-gitops
+spec:
+  goTemplate: true
+  generators:
+    - git:
+        repoURL: https://github.com/YOUR_GITHUB_ORG/fleet-workloads.git
+        revision: main
+        files:
+          - path: envs/dev/*/config.json
+  template:
+    metadata:
+      name: '{{ .app }}-dev'
+      labels:
+        env: dev
+    spec:
+      project: dev
+      source:
+        repoURL: https://github.com/YOUR_GITHUB_ORG/fleet-workloads.git
+        targetRevision: main
+        path: '{{ .path }}'
+      destination:
+        server: '{{ .server }}'
+        namespace: '{{ .namespace }}'
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+          - ApplyOutOfSyncOnly=true

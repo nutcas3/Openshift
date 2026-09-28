@@ -1,0 +1,37 @@
+# Picks up tenants/<app>/ directories added by dev-ex scaffolder PRs.
+# Each dir contains a Namespace, RBAC, quota, and a child Application —
+# manifests carry their own metadata.namespace, so the generated
+# Application's destination namespace is only a fallback.
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: tenants
+  namespace: openshift-gitops
+spec:
+  goTemplate: true
+  generators:
+    - git:
+        repoURL: https://github.com/YOUR_GITHUB_ORG/multi-cluster-gitops.git
+        revision: main
+        directories:
+          - path: tenants/*
+  template:
+    metadata:
+      name: 'tenant-{{ .path.basename }}'
+      labels:
+        env: dev
+    spec:
+      project: platform
+      source:
+        repoURL: https://github.com/YOUR_GITHUB_ORG/multi-cluster-gitops.git
+        targetRevision: main
+        path: '{{ .path.path }}'
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: openshift-gitops
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - ApplyOutOfSyncOnly=true
