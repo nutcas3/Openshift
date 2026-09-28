@@ -1,0 +1,19 @@
+apiVersion: serving.kserve.io/v1beta1
+kind: InferenceService
+metadata:
+  name: granite-code-service
+  namespace: ai-workloads
+spec:
+  predictor:
+    model:
+      modelFormat:
+        name: vLLM
+      runtime: vllm-runtime
+      storageUri: "s3://model-bucket/granite-7b-code/"
+      resources:
+        requests:
+          cpu: "4"
+          memory: 8Gi
+        limits:
+          nvidia.com/gpu: "1"
+          memory: 16Gi
