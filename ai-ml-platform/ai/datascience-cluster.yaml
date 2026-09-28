@@ -1,0 +1,30 @@
+# DataScienceCluster — activates the OpenShift AI components.
+# Apply after rhods-operator is installed.
+apiVersion: datasciencecluster.opendatahub.io/v1
+kind: DataScienceCluster
+metadata:
+  name: default-dsc
+spec:
+  components:
+    dashboard:
+      managementState: Managed
+    workbenches:
+      managementState: Managed          # Jupyter workspaces
+    datasciencepipelines:
+      managementState: Managed
+    kserve:
+      managementState: Managed          # model serving (vLLM/Triton runtimes)
+      serving:
+        managementState: Managed
+        name: knative-serving
+        ingressGateway:
+          certificate:
+            type: OpenshiftDefaultIngress
+    modelmeshserving:
+      managementState: Removed          # single-model KServe only
+    ray:
+      managementState: Removed          # enable for distributed training
+    trustyai:
+      managementState: Removed          # enable for model explainability
+    kueue:
+      managementState: Removed          # enable for GPU queueing
