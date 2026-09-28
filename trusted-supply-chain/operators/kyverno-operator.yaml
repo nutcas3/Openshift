@@ -1,0 +1,15 @@
+# Kyverno (community operator) — provides the ClusterPolicy signature
+# enforcement in policy/. Alternative: configure signature verification in
+# ACS admission control instead, then skip this operator and policy/.
+---
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: kyverno
+  namespace: openshift-operators
+spec:
+  channel: stable
+  installPlanApproval: Automatic
+  name: kyverno
+  source: community-operators
+  sourceNamespace: openshift-marketplace

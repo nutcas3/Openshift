@@ -1,0 +1,15 @@
+# Red Hat Advanced Cluster Security (StackRox) operator.
+# After install, create a Central + SecuredCluster — see README; those are
+# deployment-specific and not scaffolded here.
+---
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: rhacs-operator
+  namespace: openshift-operators
+spec:
+  channel: stable
+  installPlanApproval: Automatic
+  name: rhacs-operator
+  source: redhat-operators
+  sourceNamespace: openshift-marketplace

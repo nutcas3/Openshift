@@ -1,0 +1,24 @@
+# TektonConfig — enables Tekton Chains on the pipelines operator.
+# Apply AFTER the operator is installed (the operator creates `config`;
+# this manifest completes its spec).
+#
+# Prereq: a signing key for Chains + the cosign task:
+#   cosign generate-key-pair k8s://openshift-pipelines/signing-secrets
+# (cosign writes the cosign.key/cosign.pub/cosign.password secret itself)
+apiVersion: operator.tekton.dev/v1alpha1
+kind: TektonConfig
+metadata:
+  name: config
+spec:
+  chain:
+    disabled: false
+    # Sign OCI artifacts (images) and store signatures in the registry.
+    artifacts.oci.storage: oci
+    artifacts.oci.signer: x509
+    # Emit in-toto provenance attestations for TaskRuns/PipelineRuns.
+    artifacts.taskrun.format: in-toto
+    artifacts.taskrun.storage: oci
+    artifacts.pipelinerun.format: in-toto
+    artifacts.pipelinerun.storage: oci
+    # No public Rekor transparency log — air-gapped friendly.
+    transparency.enabled: "false"
