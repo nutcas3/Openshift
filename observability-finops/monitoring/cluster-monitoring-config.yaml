@@ -1,0 +1,11 @@
+# Enables user-workload monitoring — required for ServiceMonitors in
+# tenant namespaces to be scraped by openshift-user-workload-monitoring.
+# Apply once per cluster: oc apply -f cluster-monitoring-config.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cluster-monitoring-config
+  namespace: openshift-monitoring
+data:
+  config.yaml: |
+    enableUserWorkload: true

@@ -1,0 +1,17 @@
+# Self-service metrics collection — drop this into a tenant namespace and
+# the user-workload Prometheus auto-discovers the app's /metrics endpoint.
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: app-metrics-monitor
+  namespace: tenant-team-a
+  labels:
+    k8s-app: app-metrics
+spec:
+  selector:
+    matchLabels:
+      app: backend-service
+  endpoints:
+    - port: metrics
+      interval: 15s
+      path: /metrics

@@ -1,0 +1,40 @@
+# Dedicated monitoring stack (Prometheus + Thanos sidecar) for platform
+# metrics, provided by the Cluster Observability Operator.
+# Runs in its own namespace so tenant alerts/rules can be scoped.
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: platform-monitoring
+---
+apiVersion: monitoring.rhobs/v1alpha1
+kind: MonitoringStack
+metadata:
+  name: platform
+  namespace: platform-monitoring
+spec:
+  logLevel: info
+  retention: 7d
+  resourceSelector:
+    matchLabels:
+      # scrapes ServiceMonitors/PrometheusRules with this label
+      platform-monitoring: "true"
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: '1'
+      memory: 1Gi
+---
+# Surfaces the stack's alerting UI inside the OpenShift console
+# (Observe → Alerting).
+apiVersion: observability.openshift.io/v1alpha1
+kind: UIPlugin
+metadata:
+  name: monitoring
+spec:
+  type: Monitoring
+  monitoring:
+    acmAlerting:
+      enabled: false

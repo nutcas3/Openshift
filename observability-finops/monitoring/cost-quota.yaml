@@ -1,0 +1,41 @@
+# FinOps guardrail: fire a warning alert when a tenant namespace's CPU
+# requests (a proxy for spend) exceed the team's budget line.
+# Real $ cost metrics come from Cost Management / KubeCost; this rule
+# alerts on the resource side of the equation so it works standalone.
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: tenant-cost-quota
+  namespace: platform-monitoring
+  labels:
+    platform-monitoring: "true"
+spec:
+  groups:
+    - name: tenant-budgets
+      rules:
+        - alert: TenantCpuBudgetExceeded
+          expr: |
+            sum by (namespace) (
+              kube_pod_container_resource_requests{resource="cpu", namespace=~"tenant-.*"}
+            ) > 6
+          for: 1h
+          labels:
+            severity: warning
+            team: platform
+          annotations:
+            summary: "Tenant {{ $labels.namespace }} is over its CPU budget"
+            description: >-
+              Namespace {{ $labels.namespace }} requests {{
+              $value | printf "%.1f" }} cores (budget: 6). Review workload
+              sizes or raise the tenant's quota.
+        - alert: TenantMemoryBudgetExceeded
+          expr: |
+            sum by (namespace) (
+              kube_pod_container_resource_requests{resource="memory", namespace=~"tenant-.*"}
+            ) > 12884901888
+          for: 1h
+          labels:
+            severity: warning
+          annotations:
+            summary: "Tenant {{ $labels.namespace }} is over its memory budget"
+            description: "Budget: 12Gi"
