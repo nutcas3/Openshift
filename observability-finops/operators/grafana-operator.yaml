@@ -1,0 +1,14 @@
+# Grafana operator (community) — optional; deploy a Grafana instance wired
+# to the user-workload Prometheus/Thanos for team dashboards.
+---
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: grafana-operator
+  namespace: openshift-operators
+spec:
+  channel: v5
+  installPlanApproval: Automatic
+  name: grafana-operator
+  source: community-operators
+  sourceNamespace: openshift-marketplace

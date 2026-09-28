@@ -1,0 +1,15 @@
+# OpenShift Cost Management metrics operator — collects per-namespace /
+# per-team usage for FinOps reporting (console.redhat.com).
+# Alternative: KubeCost (`kubecost` in community-operators).
+---
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: costmanagement-metrics-operator
+  namespace: openshift-operators
+spec:
+  channel: stable
+  installPlanApproval: Automatic
+  name: costmanagement-metrics-operator
+  source: redhat-operators
+  sourceNamespace: openshift-marketplace
