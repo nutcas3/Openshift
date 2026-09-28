@@ -1,0 +1,30 @@
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: sonar-scan
+  namespace: ci-pipelines
+spec:
+  description: Runs sonar-scanner against the checked-out source.
+  workspaces:
+    - name: source
+  params:
+    - name: sonar-project-key
+      type: string
+  steps:
+    - name: scan
+      image: docker.io/sonarsource/sonar-scanner-cli:11
+      workingDir: $(workspaces.source.path)
+      env:
+        - name: SONAR_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: ci-secrets
+              key: SONAR_TOKEN
+        - name: SONAR_HOST_URL
+          valueFrom:
+            secretKeyRef:
+              name: ci-secrets
+              key: SONAR_HOST_URL
+      script: |
+        sonar-scanner \
+          -Dsonar.projectKey=$(params.sonar-project-key)

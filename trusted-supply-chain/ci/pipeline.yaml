@@ -1,0 +1,92 @@
+apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  name: secure-build-and-sign
+  namespace: ci-pipelines
+spec:
+  params:
+    - name: git-url
+      type: string
+    - name: git-revision
+      type: string
+      default: main
+    - name: image-url
+      type: string
+      description: >-
+        Target image including tag, e.g.
+        image-registry.openshift-image-registry.svc:5000/ci-pipelines/example-app:latest
+    - name: sonar-project-key
+      type: string
+      default: ""
+  workspaces:
+    - name: shared-data
+    - name: registry-auth     # secret workspace → registry-push
+    - name: signing-secrets   # secret workspace → signing-secrets
+  tasks:
+    - name: fetch-repository
+      taskRef:
+        kind: ClusterTask
+        name: git-clone
+      workspaces:
+        - name: output
+          workspace: shared-data
+      params:
+        - name: url
+          value: $(params.git-url)
+        - name: revision
+          value: $(params.git-revision)
+        - name: deleteExisting
+          value: "true"
+
+    # Static analysis runs in parallel with the image build.
+    - name: sonar-scan
+      taskRef:
+        name: sonar-scan
+      runAfter:
+        - fetch-repository
+      workspaces:
+        - name: source
+          workspace: shared-data
+      params:
+        - name: sonar-project-key
+          value: $(params.sonar-project-key)
+
+    - name: build-s2i
+      taskRef:
+        kind: ClusterTask
+        name: s2i-java
+      runAfter:
+        - fetch-repository
+      workspaces:
+        - name: source
+          workspace: shared-data
+      params:
+        - name: IMAGE
+          value: $(params.image-url)
+        - name: PATH_CONTEXT
+          value: .
+        - name: TLSVERIFY
+          value: "false"
+
+    - name: acs-image-scan
+      taskRef:
+        name: rox-image-scan
+      runAfter:
+        - build-s2i
+      params:
+        - name: image
+          value: $(tasks.build-s2i.results.IMAGE_URL)@$(tasks.build-s2i.results.IMAGE_DIGEST)
+
+    - name: sign-image
+      taskRef:
+        name: cosign-sign
+      runAfter:
+        - acs-image-scan
+      workspaces:
+        - name: signing-key
+          workspace: signing-secrets
+        - name: registry-auth
+          workspace: registry-auth
+      params:
+        - name: image
+          value: $(tasks.build-s2i.results.IMAGE_URL)@$(tasks.build-s2i.results.IMAGE_DIGEST)

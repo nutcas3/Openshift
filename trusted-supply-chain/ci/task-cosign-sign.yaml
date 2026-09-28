@@ -1,0 +1,33 @@
+# Explicit cosign signing task. Tekton Chains (enabled in
+# operators/tektonconfig-chains.yaml) additionally attests every TaskRun
+# producing IMAGE_URL+IMAGE_DIGEST — this task produces the raw signature
+# the Kyverno admission policy verifies.
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: cosign-sign
+  namespace: ci-pipelines
+spec:
+  workspaces:
+    - name: signing-key      # bound to the signing-secrets secret
+    - name: registry-auth    # bound to the registry-push dockerconfig secret
+  params:
+    - name: image
+      type: string
+      description: image@sha256:... to sign
+  steps:
+    - name: sign
+      image: registry.redhat.io/rhtas/cosign-rhel9:latest
+      env:
+        - name: COSIGN_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: signing-secrets
+              key: cosign.password
+      script: |
+        set -e
+        # cosign reads registry creds from ~/.docker/config.json
+        mkdir -p ~/.docker
+        cp "$(workspaces.registry-auth.path)/.dockerconfigjson" ~/.docker/config.json
+        cosign sign --yes --key "$(workspaces.signing-key.path)/cosign.key" "$(params.image)"
+        echo "signed: $(params.image)"

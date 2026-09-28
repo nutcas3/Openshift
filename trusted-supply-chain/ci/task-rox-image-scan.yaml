@@ -1,0 +1,35 @@
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: rox-image-scan
+  namespace: ci-pipelines
+spec:
+  description: >-
+    Checks a built image against ACS deploy-time policies (fails the
+    pipeline on violations) and prints the vulnerability report.
+  params:
+    - name: image
+      type: string
+      description: image@sha256:... to scan
+  steps:
+    - name: policy-check
+      image: registry.redhat.io/advanced-cluster-security/rhacs-roxctl-rhel8:latest
+      env:
+        - name: ROX_CENTRAL_ENDPOINT
+          valueFrom:
+            secretKeyRef:
+              name: ci-secrets
+              key: ROX_CENTRAL_ENDPOINT
+        - name: ROX_API_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: ci-secrets
+              key: ROX_API_TOKEN
+        - name: ROX_INSECURE_CLIENT
+          value: "true"
+      script: |
+        set -e
+        echo "==> ACS policy check: $(params.image)"
+        roxctl image check --image "$(params.image)"
+        echo "==> Vulnerability report"
+        roxctl image scan --image "$(params.image)" --output table || true

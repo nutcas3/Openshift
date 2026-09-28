@@ -1,0 +1,32 @@
+# Example PipelineRun — adjust params, then `oc create -f`.
+# The chains annotation tells Tekton Chains to attest this run.
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  name: secure-build-and-sign-sample
+  namespace: ci-pipelines
+  annotations:
+    chains.tekton.dev/signed: "true"
+spec:
+  serviceAccountName: pipeline-ci
+  pipelineRef:
+    name: secure-build-and-sign
+  params:
+    - name: git-url
+      value: https://github.com/YOUR_GITHUB_ORG/example-app.git
+    - name: git-revision
+      value: main
+    - name: image-url
+      value: image-registry.openshift-image-registry.svc:5000/ci-pipelines/example-app:latest
+    - name: sonar-project-key
+      value: example-app
+  workspaces:
+    - name: shared-data
+      persistentVolumeClaim:
+        claimName: shared-data
+    - name: registry-auth
+      secret:
+        secretName: registry-push
+    - name: signing-secrets
+      secret:
+        secretName: signing-secrets
