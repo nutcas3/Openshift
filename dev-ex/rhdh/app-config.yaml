@@ -1,0 +1,64 @@
+app:
+  title: Developer Hub
+  baseUrl: ${RHDH_BASE_URL}
+
+backend:
+  baseUrl: ${RHDH_BASE_URL}
+  listen:
+    port: 7007
+  cors:
+    origin: ${RHDH_BASE_URL}
+    credentials: true
+  auth:
+    keys:
+      - secret: ${BACKEND_SECRET}
+
+auth:
+  environment: development
+  providers:
+    guest: {}
+    github:
+      development:
+        clientId: ${GITHUB_APP_CLIENT_ID}
+        clientSecret: ${GITHUB_APP_CLIENT_SECRET}
+        signIn:
+          resolvers:
+            - resolver: usernameMatchingUserEntityName
+  signInPage: github
+
+integrations:
+  github:
+    - host: github.com
+      apps:
+        - appId: ${GITHUB_APP_ID}
+          clientId: ${GITHUB_APP_CLIENT_ID}
+          clientSecret: ${GITHUB_APP_CLIENT_SECRET}
+          webhookUrl: https://smee.io/${GITHUB_APP_WEBHOOK_CHANNEL}
+          webhookSecret: ${GITHUB_APP_WEBHOOK_SECRET}
+          privateKey: |
+            ${GITHUB_APP_PRIVATE_KEY}
+
+catalog:
+  rules:
+    - allow: [Component, System, API, Resource, Location, Template, Group, User, Domain]
+  locations:
+    - type: url
+      target: https://github.com/${GITHUB_ORG}/${DEV_EX_REPO}/blob/${DEV_EX_BRANCH}/templates/*/backstage-template.yaml
+      rules:
+        - allow: [Template]
+  providers:
+    githubOrg:
+      - id: production
+        githubUrl: https://github.com
+        orgs:
+          - ${GITHUB_ORG}
+        schedule:
+          initialDelay: { seconds: 15 }
+          frequency: { minutes: 30 }
+
+techdocs:
+  builder: 'local'
+  publisher:
+    type: 'local'
+
+scaffolder: {}
