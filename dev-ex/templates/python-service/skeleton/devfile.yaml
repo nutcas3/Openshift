@@ -1,0 +1,52 @@
+schemaVersion: 2.3.0
+metadata:
+  name: ${{ values.name }}
+projects:
+  - name: app
+    git:
+      remotes:
+        origin: https://github.com/${{ values.destination.owner }}/${{ values.destination.repo }}.git
+components:
+  - name: devtools
+    container:
+      # Universal Developer Image — includes Python 3 and common CLI tools.
+      # Pin to a tag/digest for reproducibility once validated.
+      image: registry.redhat.io/devspaces/udi-rhel8:latest
+      memoryLimit: 3Gi
+      cpuLimit: '1'
+      mountSources: true
+      endpoints:
+        - name: http
+          targetPort: 8080
+          exposure: public
+          protocol: http
+      env:
+        - name: PIP_DISABLE_PIP_VERSION_CHECK
+          value: '1'
+        - name: PYTHONDONTWRITEBYTECODE
+          value: '1'
+commands:
+  - id: install-deps
+    exec:
+      component: devtools
+      commandLine: python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
+      workingDir: ${PROJECT_SOURCE}
+      group:
+        kind: build
+        isDefault: true
+  - id: test
+    exec:
+      component: devtools
+      commandLine: .venv/bin/pytest
+      workingDir: ${PROJECT_SOURCE}
+      group:
+        kind: test
+        isDefault: true
+  - id: run
+    exec:
+      component: devtools
+      commandLine: .venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8080
+      workingDir: ${PROJECT_SOURCE}
+      group:
+        kind: run
+        isDefault: true
