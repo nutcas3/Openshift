@@ -1,0 +1,22 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: fleet-management
+---
+# Binds workloads to whichever managed cluster satisfies the selector AND
+# is currently Available — the failover primitive behind DR.
+apiVersion: apps.open-cluster-management.io/v1
+kind: PlacementRule
+metadata:
+  name: high-availability-placement
+  namespace: fleet-management
+spec:
+  clusterCount: 1
+  clusterSelector:
+    matchLabels:
+      environment: production
+      region: us-east
+  clusterConditions:
+    - type: ManagedClusterConditionAvailable
+      status: "True"

@@ -1,0 +1,8 @@
+# MultiClusterHub — completes the ACM install. Apply once the operator
+# CSV is Succeeded. Requires sufficient hub resources (see ACM docs).
+apiVersion: operator.open-cluster-management.io/v1
+kind: MultiClusterHub
+metadata:
+  name: multiclusterhub
+  namespace: open-cluster-management
+spec: {}

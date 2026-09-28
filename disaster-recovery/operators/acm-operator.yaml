@@ -1,0 +1,27 @@
+# Red Hat Advanced Cluster Management operator — hub for multi-cluster
+# lifecycle, placement, and Submariner add-ons. Channel pins to a release
+# stream; check available channels before applying.
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: open-cluster-management
+---
+apiVersion: operators.coreos.com/v1
+kind: OperatorGroup
+metadata:
+  name: open-cluster-management
+  namespace: open-cluster-management
+spec: {}
+---
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: advanced-cluster-management
+  namespace: open-cluster-management
+spec:
+  channel: release-2.13
+  installPlanApproval: Automatic
+  name: advanced-cluster-management
+  source: redhat-operators
+  sourceNamespace: openshift-marketplace

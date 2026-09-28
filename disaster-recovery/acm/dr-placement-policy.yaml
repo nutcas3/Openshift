@@ -1,0 +1,49 @@
+# DR governance: a Policy that auto-creates the failover PlacementRule on
+# managed clusters labeled dr-pair=primary — audit + remediation as code.
+apiVersion: policy.open-cluster-management.io/v1
+kind: Policy
+metadata:
+  name: dr-placement-policy
+  namespace: fleet-management
+  annotations:
+    policy.open-cluster-management.io/standards: NIST SP 800-53
+    policy.open-cluster-management.io/categories: CM Configuration Management
+    policy.open-cluster-management.io/controls: CM-2 Baseline Configuration
+spec:
+  remediationAction: enforce
+  disabled: false
+  policy-templates:
+    - objectDefinition:
+        apiVersion: policy.open-cluster-management.io/v1
+        kind: ConfigurationPolicy
+        metadata:
+          name: ensure-dr-placement
+        spec:
+          remediationAction: inform
+          severity: high
+          object-templates:
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: apps.open-cluster-management.io/v1
+                kind: PlacementRule
+                metadata:
+                  name: app-failover-placement
+                spec:
+                  clusterCount: 1
+                  clusterConditions:
+                    - type: ManagedClusterConditionAvailable
+                      status: "True"
+---
+apiVersion: policy.open-cluster-management.io/v1
+kind: PlacementBinding
+metadata:
+  name: binding-dr-placement-policy
+  namespace: fleet-management
+placementRef:
+  name: high-availability-placement
+  apiGroup: apps.open-cluster-management.io
+  kind: PlacementRule
+subjects:
+  - name: dr-placement-policy
+    apiGroup: policy.open-cluster-management.io
+    kind: Policy

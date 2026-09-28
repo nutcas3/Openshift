@@ -1,0 +1,24 @@
+# Submariner — cross-cluster pod/service connectivity (IPsec mesh) for
+# east-west traffic during failover. Enable per cluster pair via ACM
+# add-ons; a Broker runs on ONE cluster in the pair.
+---
+apiVersion: submarineraddon.open-cluster-management.io/v1alpha1
+kind: SubmarinerConfig
+metadata:
+  name: submariner
+  namespace: primary-cluster        # managed cluster namespace on the hub
+spec:
+  IPSecNATTPort: 4500
+  NATTEnable: true
+  gatewayCount: 1
+  # cableDriver: libreswan          # default; vxlan for non-IPSec setups
+---
+apiVersion: submarineraddon.open-cluster-management.io/v1alpha1
+kind: SubmarinerConfig
+metadata:
+  name: submariner
+  namespace: standby-cluster        # managed cluster namespace on the hub
+spec:
+  IPSecNATTPort: 4500
+  NATTEnable: true
+  gatewayCount: 1
