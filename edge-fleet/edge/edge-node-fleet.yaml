@@ -1,0 +1,86 @@
+# Assisted-installer zero-touch provisioning for edge SNO nodes
+# (MicroShift or compact OpenShift). One block of CRs per edge device.
+# Prereq: ACM hub with the Central Infrastructure Management (CIM) /
+# assisted-service enabled.
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: edge-fleet
+---
+apiVersion: hive.openshift.io/v1
+kind: ClusterImageSet
+metadata:
+  name: openshift-v4.16
+spec:
+  releaseImage: quay.io/openshift-release-dev/ocp-release:4.16.0-x86_64
+---
+apiVersion: hive.openshift.io/v1
+kind: ClusterDeployment
+metadata:
+  name: factory-edge-node-01
+  namespace: edge-fleet
+spec:
+  baseDomain: edge.example.com
+  clusterName: factory-edge-node-01
+  installed: false
+  clusterInstallRef:
+    group: extensions.hive.openshift.io
+    kind: AgentClusterInstall
+    name: factory-edge-node-01
+    version: v1beta1
+  platform:
+    agentBareMetal:
+      agentSelector: {}
+  pullSecretRef:
+    name: pull-secret          # create in edge-fleet from your RH pull secret
+---
+apiVersion: agent-install.openshift.io/v1beta1
+kind: AgentClusterInstall
+metadata:
+  name: factory-edge-node-01
+  namespace: edge-fleet
+spec:
+  clusterDeploymentRef:
+    name: factory-edge-node-01
+  imageSetRef:
+    name: openshift-v4.16
+  networking:
+    clusterNetwork:
+      - cidr: 10.128.0.0/14
+        hostPrefix: 23
+    serviceNetwork:
+      - 172.30.0.0/16
+  provisionRequirements:
+    controlPlaneAgents: 1      # single-node edge
+  sshPublicKey: ""             # optional debug access
+---
+apiVersion: v1
+kind: ManagedCluster
+metadata:
+  name: factory-edge-node-01
+  labels:
+    edge: "true"
+    site: factory-a
+spec:
+  hubAcceptsClient: true
+---
+apiVersion: agent-install.openshift.io/v1beta1
+kind: KlusterletAddonConfig
+metadata:
+  name: factory-edge-node-01
+  namespace: factory-edge-node-01
+spec:
+  clusterName: factory-edge-node-01
+  clusterNamespace: factory-edge-node-01
+  clusterLabels:
+    cloud: edge
+    vendor: OpenShift
+  applicationManager:
+    enabled: true
+  certPolicyController:
+    enabled: true
+  policyController:
+    enabled: true
+  searchCollector:
+    enabled: false             # edge nodes: keep the addon footprint light
