@@ -1,0 +1,60 @@
+schemaVersion: 2.3.0
+metadata:
+  name: ${{ values.name }}
+projects:
+  - name: app
+    git:
+      remotes:
+        origin: https://github.com/${{ values.destination.owner }}/${{ values.destination.repo }}.git
+components:
+  - name: devtools
+    container:
+      # Universal Developer Image — includes Java, Maven, and common CLI tools.
+      # Pin to a tag/digest for reproducibility once validated.
+      image: registry.redhat.io/devspaces/udi-rhel8:latest
+      memoryLimit: 6Gi
+      cpuLimit: '2'
+      mountSources: true
+      endpoints:
+        - name: http
+          targetPort: 8080
+          exposure: public
+          protocol: http
+      env:
+        - name: MAVEN_OPTS
+          value: -Dmaven.repo.local=/home/user/.m2/repository
+  - name: m2
+    volume:
+      size: 4Gi
+commands:
+  - id: package
+    exec:
+      component: devtools
+      commandLine: mvn package -DskipTests
+      workingDir: ${PROJECT_SOURCE}
+      group:
+        kind: build
+        isDefault: true
+  - id: test
+    exec:
+      component: devtools
+      commandLine: mvn test
+      workingDir: ${PROJECT_SOURCE}
+      group:
+        kind: test
+        isDefault: true
+  - id: dev
+    exec:
+      component: devtools
+      commandLine: mvn quarkus:dev
+      workingDir: ${PROJECT_SOURCE}
+      group:
+        kind: run
+        isDefault: true
+  - id: native-build
+    exec:
+      component: devtools
+      commandLine: mvn package -Dnative -DskipTests
+      workingDir: ${PROJECT_SOURCE}
+      group:
+        kind: build

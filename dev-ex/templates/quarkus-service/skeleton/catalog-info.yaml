@@ -1,0 +1,16 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: ${{ values.name }}
+  description: ${{ values.description }}
+  annotations:
+    backstage.io/techdocs-ref: dir:.
+    github.com/project-slug: ${{ values.destination.owner }}/${{ values.destination.repo }}
+    # One-click Dev Spaces workspace launch from the entity page.
+    devspaces.io/factory-url: https://devspaces.${{ values.apps_domain }}/#https://github.com/${{ values.destination.owner }}/${{ values.destination.repo }}
+    # ArgoCD plugin lookup for the tenant Application created by the gitops PR.
+    argocd/app-name: ${{ values.name }}
+spec:
+  type: service
+  lifecycle: experimental
+  owner: ${{ values.owner }}
