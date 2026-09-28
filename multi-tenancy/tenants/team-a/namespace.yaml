@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: tenant-team-a
+  labels:
+    openshift.io/cluster-monitoring: "true"
+    multi-tenancy/tenant: team-a
