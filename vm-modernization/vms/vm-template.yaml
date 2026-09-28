@@ -1,0 +1,48 @@
+# Golden VM — RHEL guest with cloud-init, declarative and GitOps-managed.
+# For production fleets, prefer VirtualMachineClusterTemplates in the
+# `openshift` namespace (consumed by the console wizard + GitOps alike).
+apiVersion: kubevirt.io/v1
+kind: VirtualMachine
+metadata:
+  name: legacy-rhel-service
+  namespace: tenant-team-a
+spec:
+  running: true
+  template:
+    metadata:
+      labels:
+        kubevirt.io/vm: legacy-rhel-service
+    spec:
+      domain:
+        devices:
+          disks:
+            - name: containerdisk
+              disk:
+                bus: virtio
+            - name: cloudinitdisk
+              disk:
+                bus: virtio
+          interfaces:
+            - name: default
+              masquerade: {}
+        machine:
+          type: pc-q35-rhel9.4.0
+        resources:
+          requests:
+            memory: 4Gi
+            cpu: "2"
+      networks:
+        - name: default
+          pod: {}
+      volumes:
+        - name: containerdisk
+          containerDisk:
+            image: registry.redhat.io/rhel9/rhel-guest-image:latest
+        - name: cloudinitdisk
+          cloudInitNoCloud:
+            userData: |
+              #cloud-config
+              user: cloud-user
+              password: changeme
+              chpasswd: { expire: False }
+              ssh_pwauth: True

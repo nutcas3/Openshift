@@ -1,0 +1,9 @@
+# Completes the OpenShift Virtualization install. Apply once the
+# kubevirt-hyperconverged operator CSV is Succeeded:
+#   oc apply -f cnv/hyperconverged.yaml
+apiVersion: hco.kubevirt.io/v1beta1
+kind: HyperConverged
+metadata:
+  name: kubevirt-hyperconverged
+  namespace: openshift-cnv
+spec: {}

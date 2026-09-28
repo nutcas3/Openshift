@@ -1,0 +1,16 @@
+# OpenShift Virtualization operator (CNV / KubeVirt).
+# Installs into openshift-cnv; requires a HyperConverged CR afterwards
+# (see cnv/hyperconverged.yaml) and nodes with virtualization support
+# (baremetal or nested-virt enabled).
+---
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: kubevirt-hyperconverged
+  namespace: openshift-cnv
+spec:
+  channel: stable
+  installPlanApproval: Automatic
+  name: kubevirt-hyperconverged
+  source: redhat-operators
+  sourceNamespace: openshift-marketplace

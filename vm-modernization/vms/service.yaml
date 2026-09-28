@@ -1,0 +1,17 @@
+# Exposes the VM on the pod network like any other workload — the point of
+# the hybrid model: VMs get ClusterIPs and Routes alongside containers.
+apiVersion: v1
+kind: Service
+metadata:
+  name: legacy-rhel-service
+  namespace: tenant-team-a
+spec:
+  selector:
+    kubevirt.io/vm: legacy-rhel-service
+  ports:
+    - name: ssh
+      port: 22
+      targetPort: 22
+    - name: http
+      port: 8080
+      targetPort: 8080
