@@ -1,0 +1,53 @@
+# Namespace isolation. Every tenant gets: default-deny, same-namespace
+# traffic, OpenShift router ingress, and DNS egress. Nothing cross-tenant.
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: deny-cross-namespace-traffic
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    # pods inside the same namespace
+    - from:
+        - podSelector: {}
+    # OpenShift Ingress Router
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              network.openshift.io/policy-group: ingress
+  egress:
+    # DNS (openshift-dns namespace)
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: openshift-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    # pods inside the same namespace
+    - to:
+        - podSelector: {}
+    # NOTE: kube-apiserver egress is denied by default. If workloads call
+    # the API, add an egress rule to the api server (or use
+    # namespaceSelector on openshift-apiserver / openshift-oauth-apiserver).
+---
+# Cluster monitoring (Prometheus scrapes) still works.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-from-openshift-monitoring
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              network.openshift.io/policy-group: monitoring

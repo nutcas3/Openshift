@@ -1,0 +1,15 @@
+# Tenant admin RoleBinding. The subject's group name is patched per
+# tenant overlay (see tenants/<name>/patch-rbac-group.yaml); it must match
+# a group from the cluster's identity provider / group sync.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: tenant-admin
+subjects:
+  - kind: Group
+    apiGroup: rbac.authorization.k8s.io
+    name: TENANT_GROUP
+roleRef:
+  kind: ClusterRole
+  apiGroup: rbac.authorization.k8s.io
+  name: admin
