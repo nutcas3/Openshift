@@ -1,0 +1,28 @@
+# `:latest` (and tagless) images are mutable — reject them so every
+# deploy is a reproducible, signable artifact.
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: disallow-latest-tag
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+    - name: require-immutable-tag
+      match:
+        any:
+        - resources:
+            kinds:
+              - Pod
+      exclude:
+        any:
+        - resources:
+            namespaces:
+              - kube-*
+              - openshift-*
+      validate:
+        message: "Images must use an explicit, non-latest tag or digest."
+        pattern:
+          spec:
+            containers:
+              - image: "!*:latest & !*:latest@*"

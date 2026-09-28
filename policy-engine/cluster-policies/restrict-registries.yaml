@@ -1,0 +1,28 @@
+# Only trusted registries — internal registry + Red Hat sources.
+# Adjust the allowlist for your environment.
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: restrict-image-registries
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+    - name: check-registry
+      match:
+        any:
+        - resources:
+            kinds:
+              - Pod
+      exclude:
+        any:
+        - resources:
+            namespaces:
+              - kube-*
+              - openshift-*
+      validate:
+        message: "Images must come from an approved registry."
+        pattern:
+          spec:
+            containers:
+              - image: "image-registry.openshift-image-registry.svc:5000/* | registry.redhat.io/* | registry.access.redhat.com/* | quay.io/YOUR_GITHUB_ORG/*"
