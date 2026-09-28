@@ -1,0 +1,155 @@
+apiVersion: backstage.io/v1beta1
+kind: Template
+metadata:
+  name: go-service
+  title: Go Service
+  description: >-
+    Golden path: scaffold a Go HTTP service (stdlib net/http), publish it to
+    GitHub, and open a GitOps PR that provisions a namespace, RBAC, quota,
+    and an ArgoCD Application (which deploys the app and its Postgres
+    instance).
+  tags:
+    - recommended
+    - golang
+    - gitops
+spec:
+  owner: group:default/platform-team
+  type: service
+
+  parameters:
+    - title: Service details
+      required:
+        - name
+        - owner
+      properties:
+        name:
+          title: Name
+          type: string
+          description: >-
+            Used for the repo, namespace, Deployment, Postgres cluster, and
+            ArgoCD Application. Lowercase alphanumeric and dashes only.
+          pattern: '^[a-z0-9]([a-z0-9-]*[a-z0-9])?$'
+          ui:autofocus: true
+          ui:options:
+            rows: 1
+        description:
+          title: Description
+          type: string
+        owner:
+          title: Owner
+          type: string
+          description: Team owning this service (catalog Group entity).
+          ui:field: OwnerPicker
+          ui:options:
+            catalogFilter:
+              kind: Group
+
+    - title: Repositories
+      required:
+        - repoUrl
+        - gitopsRepo
+      properties:
+        repoUrl:
+          title: Application repository
+          type: string
+          description: Where the new service repo is created.
+          ui:field: RepoUrlPicker
+          ui:options:
+            allowedHosts:
+              - github.com
+        gitopsRepo:
+          title: GitOps repository
+          type: string
+          description: >-
+            Repo synced by ArgoCD; a PR is opened adding tenants/<name>/.
+          ui:field: RepoUrlPicker
+          ui:options:
+            allowedHosts:
+              - github.com
+
+    - title: Cluster
+      required:
+        - apps_domain
+      properties:
+        apps_domain:
+          title: Apps domain
+          type: string
+          description: >-
+            Cluster wildcard apps domain (for routes and the Dev Spaces
+            factory URL), e.g. apps.cluster.example.com.
+          default: apps.example.com
+
+  steps:
+    - id: fetch-app
+      name: Render application skeleton
+      action: fetch:template
+      input:
+        url: ./skeleton
+        values:
+          name: ${{ parameters.name }}
+          description: ${{ parameters.description }}
+          owner: ${{ parameters.owner }}
+          namespace: ${{ parameters.name }}
+          apps_domain: ${{ parameters.apps_domain }}
+          destination: ${{ parameters.repoUrl | parseRepoUrl }}
+
+    - id: publish-app
+      name: Publish application repository
+      action: publish:github
+      input:
+        allowedHosts:
+          - github.com
+        repoUrl: ${{ parameters.repoUrl }}
+        description: ${{ parameters.description }}
+        repoVisibility: private
+        defaultBranch: main
+
+    - id: fetch-gitops
+      name: Render tenant manifests
+      action: fetch:template
+      input:
+        url: ../common/gitops-skeleton
+        targetPath: ./gitops-pr
+        values:
+          name: ${{ parameters.name }}
+          namespace: ${{ parameters.name }}
+          rbac_group: ${{ (parameters.owner | parseEntityRef).name }}
+          apps_domain: ${{ parameters.apps_domain }}
+          destination: ${{ parameters.repoUrl | parseRepoUrl }}
+
+    - id: publish-gitops-pr
+      name: Open GitOps pull request
+      action: publish:github:pull-request
+      input:
+        allowedHosts:
+          - github.com
+        repoUrl: ${{ parameters.gitopsRepo }}
+        sourcePath: ./gitops-pr
+        targetPath: tenants/${{ parameters.name }}
+        branchName: tenant-${{ parameters.name }}
+        title: 'Add tenant: ${{ parameters.name }}'
+        description: >-
+          Provisions the ${{ parameters.name }} namespace, RBAC, quota, and
+          the ArgoCD Application that syncs the app repo's manifests/.
+        update: false
+
+    - id: register
+      name: Register component in catalog
+      action: catalog:register
+      input:
+        catalogInfoUrl: ${{ steps['publish-app'].output.repoContentsUrl }}/catalog-info.yaml
+        optional: true
+
+  output:
+    links:
+      - title: Application repository
+        url: ${{ steps['publish-app'].output.remoteUrl }}
+      - title: GitOps pull request
+        url: ${{ steps['publish-gitops-pr'].output.pullRequestUrl }}
+      - title: Open in Dev Spaces
+        url: https://devspaces.${{ parameters.apps_domain }}/#${{ steps['publish-app'].output.remoteUrl }}
+    text:
+      - title: What happens next
+        content: >-
+          Merging the GitOps PR creates the tenant namespace and the ArgoCD
+          Application, which deploys the service and its Postgres database.

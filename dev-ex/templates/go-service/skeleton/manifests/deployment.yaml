@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ${{ values.name }}
+  labels:
+    app.kubernetes.io/name: ${{ values.name }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: ${{ values.name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: ${{ values.name }}
+    spec:
+      containers:
+        - name: app
+          # Replace with your built image (e.g. an ImageStream from an
+          # OpenShift build, or an external registry).
+          image: quay.io/${{ values.destination.owner }}/${{ values.destination.repo }}:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8080
+          env:
+            # CloudNativePG writes connection creds into <cluster>-app.
+            - name: DATABASE_URL
+              value: postgresql://${{ values.name }}-rw:5432/app
+            - name: DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: ${{ values.name }}-app
+                  key: username
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: ${{ values.name }}-app
+                  key: password
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 15
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: '1'
+              memory: 512Mi

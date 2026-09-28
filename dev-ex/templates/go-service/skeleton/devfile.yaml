@@ -1,0 +1,52 @@
+schemaVersion: 2.3.0
+metadata:
+  name: ${{ values.name }}
+projects:
+  - name: app
+    git:
+      remotes:
+        origin: https://github.com/${{ values.destination.owner }}/${{ values.destination.repo }}.git
+components:
+  - name: devtools
+    container:
+      # Universal Developer Image — includes Go, Java, Python, and common
+      # CLI tools. Pin to a tag/digest for reproducibility once validated.
+      image: registry.redhat.io/devspaces/udi-rhel8:latest
+      memoryLimit: 4Gi
+      cpuLimit: '2'
+      mountSources: true
+      endpoints:
+        - name: http
+          targetPort: 8080
+          exposure: public
+          protocol: http
+      env:
+        - name: GOPATH
+          value: /home/user/go
+        - name: GOCACHE
+          value: /home/user/.cache/go-build
+commands:
+  - id: build
+    exec:
+      component: devtools
+      commandLine: go build -o bin/app .
+      workingDir: ${PROJECT_SOURCE}
+      group:
+        kind: build
+        isDefault: true
+  - id: test
+    exec:
+      component: devtools
+      commandLine: go test ./...
+      workingDir: ${PROJECT_SOURCE}
+      group:
+        kind: test
+        isDefault: true
+  - id: run
+    exec:
+      component: devtools
+      commandLine: go run .
+      workingDir: ${PROJECT_SOURCE}
+      group:
+        kind: run
+        isDefault: true
