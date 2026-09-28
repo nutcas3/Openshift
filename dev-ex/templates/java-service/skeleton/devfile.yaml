@@ -1,0 +1,54 @@
+schemaVersion: 2.3.0
+metadata:
+  name: ${{ values.name }}
+projects:
+  - name: app
+    git:
+      remotes:
+        origin: https://github.com/${{ values.destination.owner }}/${{ values.destination.repo }}.git
+components:
+  - name: devtools
+    container:
+      # Universal Developer Image. pom.xml targets Java 25 (latest LTS) —
+      # if the pinned UDI ships an older JDK, either lower
+      # maven.compiler.release or switch to an image that provides it.
+      image: registry.redhat.io/devspaces/udi-rhel8:latest
+      memoryLimit: 4Gi
+      cpuLimit: '2'
+      mountSources: true
+      endpoints:
+        - name: http
+          targetPort: 8080
+          exposure: public
+          protocol: http
+      env:
+        - name: MAVEN_OPTS
+          value: -Dmaven.repo.local=/home/user/.m2/repository
+  - name: m2
+    volume:
+      size: 4Gi
+commands:
+  - id: package
+    exec:
+      component: devtools
+      commandLine: mvn package -DskipTests
+      workingDir: ${PROJECT_SOURCE}
+      group:
+        kind: build
+        isDefault: true
+  - id: test
+    exec:
+      component: devtools
+      commandLine: mvn test
+      workingDir: ${PROJECT_SOURCE}
+      group:
+        kind: test
+        isDefault: true
+  - id: run
+    exec:
+      component: devtools
+      commandLine: java -jar target/app.jar
+      workingDir: ${PROJECT_SOURCE}
+      group:
+        kind: run
+        isDefault: true
