@@ -1,0 +1,28 @@
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: chaos-slo-gate
+  namespace: ci-pipelines
+spec:
+  params:
+    - name: engine
+      type: string
+    - name: namespace
+      type: string
+      default: tenant-team-a
+    - name: timeout
+      type: string
+      default: "300"
+  steps:
+    - name: run-and-verify
+      image: registry.redhat.io/openshift4/ose-cli:latest
+      script: |
+        set -e
+        echo "==> starting chaos engine $(params.engine)"
+        oc annotate chaosengine "$(params.engine)" -n "$(params.namespace)" \
+          engineState=active --overwrite || oc apply -f chaos-engine.yaml
+        echo "==> waiting for chaos result"
+        oc wait --for=jsonpath='{.status.experiments[0].verdict}'=Passed \
+          chaosresult "$(params.engine)-pod-delete" \
+          -n "$(params.namespace)" --timeout "$(params.timeout)s"
+        echo "==> workload recovered — resilience gate PASSED"

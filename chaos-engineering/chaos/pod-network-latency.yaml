@@ -1,0 +1,22 @@
+apiVersion: litmuschaos.io/v1alpha1
+kind: ChaosEngine
+metadata:
+  name: backend-latency-experiment
+  namespace: tenant-team-a
+spec:
+  appinfo:
+    appkind: deployment
+    applabel: app=backend-service
+  chaosServiceAccount: chaos-runner-sa
+  engineState: active
+  experiments:
+    - name: pod-network-latency
+      spec:
+        components:
+          env:
+            - name: NETWORK_LATENCY
+              value: '200'
+            - name: JITTER
+              value: '50'
+            - name: TOTAL_CHAOS_DURATION
+              value: '60'
