@@ -1,0 +1,26 @@
+# Eventing backbone: an in-memory Broker per tenant namespace +
+# a Trigger routing events to the serverless service.
+# Swap InMemoryChannel for a Kafka-backed channel (KnativeKafka CR) when
+# AMQ Streams is present.
+---
+apiVersion: eventing.knative.dev/v1
+kind: Broker
+metadata:
+  name: default
+  namespace: tenant-team-a
+---
+apiVersion: eventing.knative.dev/v1
+kind: Trigger
+metadata:
+  name: pdf-jobs
+  namespace: tenant-team-a
+spec:
+  broker: default
+  filter:
+    attributes:
+      type: pdf.generate.requested
+  subscriber:
+    ref:
+      apiVersion: serving.knative.dev/v1
+      kind: Service
+      name: pdf-processor

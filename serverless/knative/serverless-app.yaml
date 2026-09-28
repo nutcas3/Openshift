@@ -1,0 +1,22 @@
+# Scale-to-zero service: pods exist only while requests flow.
+# Receives traffic via the knative ingress; scale 0 → N → 0.
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: pdf-processor
+  namespace: tenant-team-a
+spec:
+  template:
+    metadata:
+      annotations:
+        autoscaling.knative.dev/minScale: "0"
+        autoscaling.knative.dev/maxScale: "50"
+        autoscaling.knative.dev/target: "10"   # concurrent req per pod
+    spec:
+      containers:
+        - image: registry.redhat.io/apps/pdf-generator:latest
+          ports:
+            - containerPort: 8080
+          resources:
+            limits:
+              memory: 1Gi
